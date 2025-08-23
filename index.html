@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Tier Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Pokemon Tier Tool</h1>
+        <label for="fileInput" class="btn">Load CSV</label>
+        <input type="file" id="fileInput" accept=".csv">
+        <span id="dataStatus">No data loaded</span>
+    </div>
+
+    <div class="controls">
+        <div class="group-controls">
+            <label>New Group:</label>
+            <select id="groupField">
+                <option value="Type">Type</option>
+                <option value="Nature">Nature</option>
+                <option value="Item">Item</option>
+                <option value="Move">Move</option>
+                <option value="custom">Custom</option>
+            </select>
+            <input type="text" id="groupValue" placeholder="Enter value...">
+            <button class="btn success" id="createGroup">Create Group</button>
+        </div>
+        
+        <button class="btn secondary" id="exportBtn">Export CSV</button>
+        <button class="btn secondary" id="saveLayoutBtn">Save Layout</button>
+        <button class="btn secondary" id="loadLayoutBtn">Load Layout</button>
+        <input type="file" id="layoutInput" accept=".json" style="display: none;">
+        <button class="btn secondary" id="clearSidebar">Clear Sidebar</button>
+        
+        <div class="zoom-info">
+            Zoom: <span id="zoomLevel">100%</span> | Pool: <span id="poolCount">0</span> | Grouped: <span id="groupedCount">0</span> | Canvas: <span id="canvasUsage">0/1600px</span> | WASD/Arrows to pan
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="canvas-container">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+        <div class="sidebar">
+            <div style="margin-bottom: 15px;">
+                <h3 style="margin-bottom: 8px;">Mode</h3>
+                <select id="modeSelect" style="width: 100%;">
+                    <option value="free">Free Mode</option>
+                    <option value="score">Score Mode</option>
+                    <option value="speed">Speed Mode</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <h3 style="margin-bottom: 8px;">Global Settings</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div>
+                        <label style="font-weight: bold; margin-right: 4px;">IVs:</label>
+                        <input type="number" min="0" max="31" step="1" value="31" id="globalIVs"
+                               style="width: 40px; padding: 2px;">
+                    </div>
+                    <div style="margin-left: -10px;">
+                        <label style="font-weight: bold; margin-right: 4px;">Level:</label>
+                        <select style="width: 60px; padding: 2px;" id="globalLevel">
+                            <option value="50">50</option>
+                            <option value="100" selected>100</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="speedValueSection" style="margin-bottom: 15px; display: none;">
+                <h3 style="margin-bottom: 8px;">Find Speed Value</h3>
+                <div id="speedValueRows">
+                    <div class="speed-value-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                        <div class="speed-color-indicator" style="width: 12px; height: 12px; background-color: #ff6b6b; border: 1px solid #333; border-radius: 2px;"></div>
+                        <label style="font-weight: bold;">Value:</label>
+                        <input type="number" min="0" max="999" step="1" class="speed-value-input" 
+                               style="width: 50px; padding: 2px;" placeholder="000">
+                        <label style="font-weight: bold;">Boost:</label>
+                        <select class="speed-boost-select" style="width: 50px; padding: 2px;">
+                            <option value="6">+6</option>
+                            <option value="5">+5</option>
+                            <option value="4">+4</option>
+                            <option value="3">+3</option>
+                            <option value="2">+2</option>
+                            <option value="1">+1</option>
+                            <option value="0" selected>0</option>
+                            <option value="-1">-1</option>
+                            <option value="-2">-2</option>
+                            <option value="-3">-3</option>
+                            <option value="-4">-4</option>
+                            <option value="-5">-5</option>
+                            <option value="-6">-6</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="addSpeedValueBtn" class="btn secondary" style="padding: 4px 8px; font-size: 12px;">Add Speed Value</button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3>Viewed Pokemon</h3>
+                <button class="btn secondary" id="clearAllSelected" style="padding: 4px 8px; font-size: 12px;">Clear All</button>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer;">
+                    <input type="checkbox" id="viewOnClickCheckbox" checked>
+                    View Pokemon On Click
+                </label>
+            </div>
+            <div id="sidebarContent">
+                <p>Click on Pokemon icons to view details here.</p>
+            </div>
+            
+            <div class="group-list">
+                <h3>Groups</h3>
+                <div id="groupList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Focus Modal -->
+    <div id="focusModal" class="focus-modal">
+        <div class="focus-modal-content">
+            <div class="focus-modal-header">
+                <h2 id="focusModalTitle">Focus on Group</h2>
+                <button class="focus-modal-close" onclick="window.tool?.closeFocusModal()">Close</button>
+            </div>
+            <div class="focus-grid-container">
+                <div id="focusGrid" class="focus-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="canvasRenderer.js"></script>
+    <script src="groupManager.js"></script>
+    <script src="uiManager.js"></script>
+    <script src="pokemonTierTool.js"></script>
+</body>
+</html>
