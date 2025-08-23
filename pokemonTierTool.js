@@ -1,4 +1,4 @@
-// Version 2.6 - Fixed mode switching and profile loading issues with Speed Mode groups
+// Version 2.8 - Updated group creation options and placeholder text handling
 // Main Pokemon Tier Tool class
 class PokemonTierTool {
     constructor() {
@@ -42,7 +42,7 @@ class PokemonTierTool {
         this.contextMenuIcon = null;
         
         // UI properties
-        this.viewOnClick = true;
+        this.viewOnClick = false;
         
         // Score Mode reordering properties
         this.insertionPreview = null;
@@ -138,19 +138,21 @@ class PokemonTierTool {
             this.loadLayout(e.target.files[0]);
         });
 
-        document.getElementById('clearSidebar').addEventListener('click', () => {
-            this.uiManager.clearSidebar();
-        });
+
 
         // Auto-fill group value based on field
         document.getElementById('groupField').addEventListener('change', (e) => {
             document.getElementById('groupValue').value = '';
-            if (e.target.value === 'Move') {
+            if (e.target.value === 'Type') {
+                document.getElementById('groupValue').placeholder = 'Enter type (e.g. Fire or Fire Flying)...';
+            } else if (e.target.value === 'Species') {
+                document.getElementById('groupValue').placeholder = 'Enter species name...';
+            } else if (e.target.value === 'Move') {
                 document.getElementById('groupValue').placeholder = 'Enter move name...';
-            } else if (e.target.value !== 'custom') {
-                document.getElementById('groupValue').placeholder = `Enter ${e.target.value}...`;
-            } else {
+            } else if (e.target.value === 'custom') {
                 document.getElementById('groupValue').placeholder = 'Enter custom group name...';
+            } else {
+                document.getElementById('groupValue').placeholder = `Enter ${e.target.value}...`;
             }
         });
 
@@ -176,9 +178,13 @@ class PokemonTierTool {
             if (newMode === 'speed') {
                 this.uiManager.showSpeedValueSection();
                 
-                // Load Speed Mode group directly
+                // Load Speed Mode group directly from profile
                 const speedProfile = this.profiles['speed'];
+                console.log('Speed profile when switching to Speed Mode:', speedProfile);
+                
                 if (speedProfile && speedProfile.speedModeGroup) {
+                    console.log('Loading Speed Mode group:', speedProfile.speedModeGroup);
+                    
                     // Recreate the active group reference
                     this.uiManager.speedModeActiveGroup = {
                         id: speedProfile.speedModeGroup.id,
@@ -189,9 +195,12 @@ class PokemonTierTool {
                         ).filter(icon => icon) // Filter out any missing icons
                     };
                     
+                    console.log('Created speedModeActiveGroup:', this.uiManager.speedModeActiveGroup);
+                    
                     // Apply group highlights
                     this.uiManager.applySpeedModeGroupHighlights();
                 } else {
+                    console.log('No Speed Mode group found in profile');
                     this.uiManager.speedModeActiveGroup = null;
                 }
                 

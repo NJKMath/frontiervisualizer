@@ -1,4 +1,4 @@
-// Version 2.4 - Fixed Speed Mode group loading in loadProfileState method
+// Version 2.6 - Updated group creation: disabled in Speed Mode, added Species option, improved dual type search
 // Group and icon management methods
 class GroupManager {
     constructor(tool) {
@@ -58,6 +58,16 @@ class GroupManager {
         
         // Save selected icons (by ID)
         this.tool.profiles[mode].selectedIcons = this.tool.selectedIcons.map(icon => icon.id);
+        
+        // Save Speed Mode group if in Speed Mode and one exists
+        if (mode === 'speed' && this.tool.uiManager.speedModeActiveGroup) {
+            this.tool.profiles[mode].speedModeGroup = {
+                id: this.tool.uiManager.speedModeActiveGroup.id,
+                name: this.tool.uiManager.speedModeActiveGroup.name,
+                color: this.tool.uiManager.speedModeActiveGroup.color,
+                iconDataIndices: this.tool.uiManager.speedModeActiveGroup.icons.map(icon => icon.dataIndex)
+            };
+        }
         
         // Mark as initialized
         this.tool.profiles[mode].initialized = true;
@@ -239,7 +249,7 @@ class GroupManager {
             const ungroupedIcons = this.tool.icons.filter(icon => icon.groupId === null);
             this.positionIconsBySpeed(ungroupedIcons);
             
-            // Load and apply Speed Mode group after positioning
+            // Load Speed Mode group after positioning (now using correct property)
             this.tool.uiManager.loadSpeedModeGroup();
         }
         
@@ -373,9 +383,22 @@ class GroupManager {
     }
 
     hasType(icon, targetType) {
-        return icon.types.some(type => 
-            type.toLowerCase() === targetType.toLowerCase()
-        );
+        // Check if this is a dual type search (contains space)
+        if (targetType.includes(' ')) {
+            const searchTypes = targetType.toLowerCase().trim().split(/\s+/);
+            
+            // For dual type search, Pokemon must have all specified types
+            return searchTypes.every(searchType => 
+                icon.types.some(iconType => 
+                    iconType.toLowerCase() === searchType
+                )
+            );
+        } else {
+            // Single type search - Pokemon must have this type
+            return icon.types.some(type => 
+                type.toLowerCase() === targetType.toLowerCase()
+            );
+        }
     }
 
     hasMove(icon, targetMove) {
@@ -637,6 +660,12 @@ class GroupManager {
     }
 
     createNewGroup() {
+        // Disable group creation in Speed Mode - groups should be sent from Free Mode
+        if (this.tool.mode === 'speed') {
+            alert('Group creation is disabled in Speed Mode. Please create groups in Free Mode and send them to Speed Mode.');
+            return;
+        }
+        
         const field = document.getElementById('groupField').value;
         const value = document.getElementById('groupValue').value.trim();
         
@@ -652,6 +681,10 @@ class GroupManager {
         } else if (field === 'Type') {
             matchingIcons = this.tool.icons.filter(icon => 
                 icon.groupId === null && this.hasType(icon, value)
+            );
+        } else if (field === 'Species') {
+            matchingIcons = this.tool.icons.filter(icon => 
+                icon.groupId === null && icon.data.Species === value
             );
         } else if (field === 'Move') {
             matchingIcons = this.tool.icons.filter(icon => 

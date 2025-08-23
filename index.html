@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokemon Tier Tool</title>
+    <title>Frontier Visualizer</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="header">
-        <h1>Pokemon Tier Tool</h1>
+        <h1>Frontier Visualizer</h1>
         <label for="fileInput" class="btn">Load CSV</label>
         <input type="file" id="fileInput" accept=".csv">
         <span id="dataStatus">No data loaded</span>
@@ -19,12 +19,11 @@
             <label>New Group:</label>
             <select id="groupField">
                 <option value="Type">Type</option>
-                <option value="Nature">Nature</option>
-                <option value="Item">Item</option>
+                <option value="Species">Species</option>
                 <option value="Move">Move</option>
                 <option value="custom">Custom</option>
             </select>
-            <input type="text" id="groupValue" placeholder="Enter value...">
+            <input type="text" id="groupValue" placeholder="Enter type (e.g. Fire or Fire Flying)...">
             <button class="btn success" id="createGroup">Create Group</button>
         </div>
         
@@ -32,7 +31,6 @@
         <button class="btn secondary" id="saveLayoutBtn">Save Layout</button>
         <button class="btn secondary" id="loadLayoutBtn">Load Layout</button>
         <input type="file" id="layoutInput" accept=".json" style="display: none;">
-        <button class="btn secondary" id="clearSidebar">Clear Sidebar</button>
         
         <div class="zoom-info">
             Zoom: <span id="zoomLevel">100%</span> | Pool: <span id="poolCount">0</span> | Grouped: <span id="groupedCount">0</span> | Canvas: <span id="canvasUsage">0/1600px</span> | WASD/Arrows to pan
@@ -75,10 +73,10 @@
                 <h3 style="margin-bottom: 8px;">Find Speed Value</h3>
                 <div id="speedValueRows">
                     <div class="speed-value-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
-                        <div class="speed-color-indicator" style="width: 12px; height: 12px; background-color: #ff6b6b; border: 1px solid #333; border-radius: 2px;"></div>
+                        <div class="speed-color-indicator" style="width: 12px; height: 12px; background-color: #ff5722; border: 1px solid #333; border-radius: 2px;"></div>
                         <label style="font-weight: bold;">Value:</label>
                         <input type="number" min="0" max="999" step="1" class="speed-value-input" 
-                               style="width: 50px; padding: 2px;" placeholder="000">
+                               style="width: 40px; padding: 2px;" placeholder="000">
                         <label style="font-weight: bold;">Boost:</label>
                         <select class="speed-boost-select" style="width: 50px; padding: 2px;">
                             <option value="6">+6</option>
@@ -106,7 +104,7 @@
             </div>
             <div style="margin-bottom: 10px;">
                 <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer;">
-                    <input type="checkbox" id="viewOnClickCheckbox" checked>
+                    <input type="checkbox" id="viewOnClickCheckbox">
                     View Pokemon On Click
                 </label>
             </div>

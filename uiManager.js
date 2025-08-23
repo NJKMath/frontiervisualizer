@@ -1,4 +1,4 @@
-// Version 2.7 - Fixed profile switching issues and Speed Mode group persistence bugs
+// Version 2.10 - Updated Speed Value UI: smaller input, color squares as delete buttons
 // User interface management methods
 class UIManager {
     constructor(tool) {
@@ -21,14 +21,14 @@ class UIManager {
             '6': 8/2     // 4.0
         };
         this.speedHighlightColors = [
-            '#ff6b6b', // Red
-            '#4ecdc4', // Teal
-            '#45b7d1', // Blue
-            '#96ceb4', // Green
-            '#ffeaa7', // Yellow
-            '#dda0dd', // Purple
-            '#98d8c8', // Mint
-            '#f7dc6f'  // Orange
+            '#ff5722', // Deep Orange
+            '#9c27b0', // Purple
+            '#2196f3', // Blue
+            '#e91e63', // Pink
+            '#ff9800', // Orange
+            '#00bcd4', // Cyan
+            '#795548', // Brown
+            '#607d8b'  // Blue Grey
         ];
         this.setupSpeedValueEvents();
     }
@@ -72,18 +72,18 @@ class UIManager {
         const rowsContainer = document.getElementById('speedValueRows');
         const newRow = document.createElement('div');
         newRow.className = 'speed-value-row';
-        newRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 5px;';
+        newRow.style.cssText = 'display: flex; align-items: center; gap: 6px; margin-bottom: 5px;';
         
         const colorIndex = this.speedValueRowCount;
         const backgroundColor = this.speedHighlightColors[colorIndex % this.speedHighlightColors.length];
         
         newRow.innerHTML = `
-            <div class="speed-color-indicator" style="width: 12px; height: 12px; background-color: ${backgroundColor}; border: 1px solid #333; border-radius: 2px;"></div>
+            <div class="speed-color-indicator speed-deletable" style="width: 12px; height: 12px; background-color: ${backgroundColor}; border: 1px solid #333; border-radius: 2px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 9px; text-shadow: 1px 1px 1px rgba(0,0,0,0.5);">&times;</div>
             <label style="font-weight: bold;">Value:</label>
             <input type="number" min="0" max="999" step="1" class="speed-value-input" 
-                   style="width: 50px; padding: 2px;" placeholder="000">
+                   style="width: 30px !important; padding: 2px;" placeholder="000">
             <label style="font-weight: bold;">Boost:</label>
-            <select class="speed-boost-select" style="width: 50px; padding: 2px;">
+            <select class="speed-boost-select" style="width: 45px; padding: 2px;">
                 <option value="6">+6</option>
                 <option value="5">+5</option>
                 <option value="4">+4</option>
@@ -98,7 +98,6 @@ class UIManager {
                 <option value="-5">-5</option>
                 <option value="-6">-6</option>
             </select>
-            <button class="speed-delete-btn" type="button">&times;</button>
         `;
         
         rowsContainer.appendChild(newRow);
@@ -107,9 +106,9 @@ class UIManager {
         // Setup event listeners for new row
         this.setupSpeedValueRow(newRow, colorIndex);
         
-        // Setup delete button
-        const deleteBtn = newRow.querySelector('.speed-delete-btn');
-        deleteBtn.addEventListener('click', () => {
+        // Setup delete functionality on the color indicator
+        const colorIndicator = newRow.querySelector('.speed-deletable');
+        colorIndicator.addEventListener('click', () => {
             this.removeSpeedValueRow(newRow);
         });
     }
@@ -145,19 +144,23 @@ class UIManager {
 
     loadSpeedModeGroup() {
         const speedProfile = this.tool.profiles['speed'];
-        if (speedProfile && speedProfile.activeGroupData) {
+        if (speedProfile && speedProfile.speedModeGroup) {
             // Recreate the active group reference
             this.speedModeActiveGroup = {
-                id: speedProfile.activeGroupData.id,
-                name: speedProfile.activeGroupData.name,
-                color: speedProfile.activeGroupData.color,
-                icons: speedProfile.activeGroupData.iconDataIndices.map(dataIndex => 
+                id: speedProfile.speedModeGroup.id,
+                name: speedProfile.speedModeGroup.name,
+                color: speedProfile.speedModeGroup.color,
+                icons: speedProfile.speedModeGroup.iconDataIndices.map(dataIndex => 
                     this.tool.icons.find(icon => icon.dataIndex === dataIndex)
                 ).filter(icon => icon) // Filter out any missing icons
             };
             
             // Apply group highlights
             this.applySpeedModeGroupHighlights();
+            console.log('Speed Mode group loaded:', this.speedModeActiveGroup);
+        } else {
+            this.speedModeActiveGroup = null;
+            console.log('No Speed Mode group to load');
         }
     }
 
@@ -606,7 +609,7 @@ class UIManager {
             this.tool.profiles['speed'] = { groups: [], iconStates: [], selectedIcons: [], initialized: false };
         }
         
-        // Store the group data for Speed Mode
+        // Store the group data for Speed Mode (using consistent property name)
         this.tool.profiles['speed'].speedModeGroup = {
             id: group.id,
             name: group.name,
@@ -618,19 +621,32 @@ class UIManager {
     }
 
     applySpeedModeGroupHighlights() {
-        if (!this.speedModeActiveGroup) return;
+        if (!this.speedModeActiveGroup) {
+            console.log('No Speed Mode active group to highlight');
+            return;
+        }
+        
+        console.log('Applying Speed Mode group highlights for:', this.speedModeActiveGroup.name);
+        console.log('Group contains icons with data indices:', this.speedModeActiveGroup.icons.map(icon => icon.dataIndex));
         
         // Clear existing group highlights
         this.tool.icons.forEach(icon => {
             delete icon.speedGroupHighlight;
         });
         
+        let highlightCount = 0;
+        
         // Apply group highlights
         this.tool.icons.forEach(icon => {
             if (this.isIconInSpeedModeGroup(icon)) {
                 icon.speedGroupHighlight = true;
+                highlightCount++;
+                console.log(`Highlighted icon: ${icon.label}`);
             }
         });
+        
+        console.log(`Applied highlights to ${highlightCount} icons`);
+        this.tool.canvasRenderer.render();
     }
 
     isIconInSpeedModeGroup(icon) {
@@ -645,7 +661,11 @@ class UIManager {
                     )
                 );
                 if (result) {
-                    console.log(`Combined icon ${icon.label} matches group via component`);
+                    console.log(`Combined icon ${icon.label} matches group via component icon with dataIndex:`, 
+                        icon.originalIcons.find(orig => 
+                            this.speedModeActiveGroup.icons.some(groupIcon => groupIcon.dataIndex === orig.dataIndex)
+                        )?.dataIndex
+                    );
                 }
                 return result;
             }
@@ -655,7 +675,7 @@ class UIManager {
                 groupIcon.dataIndex === icon.dataIndex
             );
             if (result) {
-                console.log(`Regular icon ${icon.label} matches group directly`);
+                console.log(`Regular icon ${icon.label} (dataIndex: ${icon.dataIndex}) matches group directly`);
             }
             return result;
         }
@@ -678,6 +698,8 @@ class UIManager {
         
         this.updateGroupList();
         this.tool.canvasRenderer.render();
+        
+        console.log('Speed Mode group cleared');
     }
 
     updateCounts() {

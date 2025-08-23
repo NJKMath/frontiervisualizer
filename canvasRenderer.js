@@ -91,36 +91,36 @@ class CanvasRenderer {
             // Handle dual highlighting: group + speed value
             if (icon.speedGroupHighlight && icon.speedHighlight !== undefined) {
                 // Group color for fill, speed color for border
-                fillColor = '#e91e63'; // Pink group color
+                fillColor = '#00e676'; // Bright green group color
                 const speedColors = [
-                    { fill: '#ff6b6b', stroke: '#ff5252' }, // Red
-                    { fill: '#4ecdc4', stroke: '#26a69a' }, // Teal
-                    { fill: '#45b7d1', stroke: '#2196f3' }, // Blue
-                    { fill: '#96ceb4', stroke: '#4caf50' }, // Green
-                    { fill: '#ffeaa7', stroke: '#ffc107' }, // Yellow
-                    { fill: '#dda0dd', stroke: '#9c27b0' }, // Purple
-                    { fill: '#98d8c8', stroke: '#009688' }, // Mint
-                    { fill: '#f7dc6f', stroke: '#f39c12' }  // Orange
+                    { fill: '#ff5722', stroke: '#d84315' }, // Deep Orange
+                    { fill: '#9c27b0', stroke: '#7b1fa2' }, // Purple
+                    { fill: '#2196f3', stroke: '#1976d2' }, // Blue
+                    { fill: '#e91e63', stroke: '#c2185b' }, // Pink
+                    { fill: '#ff9800', stroke: '#f57c00' }, // Orange
+                    { fill: '#00bcd4', stroke: '#0097a7' }, // Cyan
+                    { fill: '#795548', stroke: '#5d4037' }, // Brown
+                    { fill: '#607d8b', stroke: '#455a64' }  // Blue Grey
                 ];
                 const colorSet = speedColors[icon.speedHighlight % speedColors.length];
                 strokeColor = colorSet.stroke;
                 lineWidth = 4;
             } else if (icon.speedGroupHighlight) {
                 // Speed Mode group highlight only
-                fillColor = '#e91e63'; // Pink
-                strokeColor = '#c2185b';
+                fillColor = '#00e676'; // Bright green
+                strokeColor = '#00c853';
                 lineWidth = 4;
             } else if (icon.speedHighlight !== undefined) {
                 // Speed highlight only
                 const speedColors = [
-                    { fill: '#ff6b6b', stroke: '#ff5252' }, // Red
-                    { fill: '#4ecdc4', stroke: '#26a69a' }, // Teal
-                    { fill: '#45b7d1', stroke: '#2196f3' }, // Blue
-                    { fill: '#96ceb4', stroke: '#4caf50' }, // Green
-                    { fill: '#ffeaa7', stroke: '#ffc107' }, // Yellow
-                    { fill: '#dda0dd', stroke: '#9c27b0' }, // Purple
-                    { fill: '#98d8c8', stroke: '#009688' }, // Mint
-                    { fill: '#f7dc6f', stroke: '#f39c12' }  // Orange
+                    { fill: '#ff5722', stroke: '#d84315' }, // Deep Orange
+                    { fill: '#9c27b0', stroke: '#7b1fa2' }, // Purple
+                    { fill: '#2196f3', stroke: '#1976d2' }, // Blue
+                    { fill: '#e91e63', stroke: '#c2185b' }, // Pink
+                    { fill: '#ff9800', stroke: '#f57c00' }, // Orange
+                    { fill: '#00bcd4', stroke: '#0097a7' }, // Cyan
+                    { fill: '#795548', stroke: '#5d4037' }, // Brown
+                    { fill: '#607d8b', stroke: '#455a64' }  // Blue Grey
                 ];
                 const colorSet = speedColors[icon.speedHighlight % speedColors.length];
                 fillColor = colorSet.fill;
