@@ -19,12 +19,13 @@
             <label>New Group:</label>
             <select id="groupField">
                 <option value="Type">Type</option>
-                <option value="Species">Species</option>
                 <option value="Move">Move</option>
+                <option value="Species">Species</option>
                 <option value="custom">Custom</option>
             </select>
             <input type="text" id="groupValue" placeholder="Enter type (e.g. Fire or Fire Flying)...">
             <button class="btn success" id="createGroup">Create Group</button>
+        <button class="btn secondary" id="advancedFilterBtn">Advanced Filter</button>
         </div>
         
         <button class="btn secondary" id="exportBtn">Export CSV</button>
@@ -76,7 +77,7 @@
                         <div class="speed-color-indicator" style="width: 12px; height: 12px; background-color: #ff5722; border: 1px solid #333; border-radius: 2px;"></div>
                         <label style="font-weight: bold;">Value:</label>
                         <input type="number" min="0" max="999" step="1" class="speed-value-input" 
-                               style="width: 40px; padding: 2px;" placeholder="000">
+                               style="width: 30px; padding: 2px;" placeholder="000">
                         <label style="font-weight: bold;">Boost:</label>
                         <select class="speed-boost-select" style="width: 50px; padding: 2px;">
                             <option value="6">+6</option>
@@ -128,6 +129,40 @@
             </div>
             <div class="focus-grid-container">
                 <div id="focusGrid" class="focus-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Filter Modal -->
+    <div id="advancedFilterModal" class="advanced-filter-modal">
+        <div class="advanced-filter-content">
+            <div class="advanced-filter-header">
+                <h2>Advanced Filter</h2>
+                <button class="focus-modal-close" onclick="window.tool?.uiManager.closeAdvancedFilterModal()">Close</button>
+            </div>
+            <div class="advanced-filter-body">
+                <div class="filter-instructions">
+                    <h3>Query Syntax:</h3>
+                    <p>Use <strong>Type:</strong> and <strong>Move:</strong> followed by the name. Combine with <strong>AND</strong>, <strong>OR</strong>, <strong>NOT</strong>, and parentheses.</p>
+                    <div class="filter-examples">
+                        <strong>Examples:</strong>
+                        <div>• Type: Water AND Move: Surf</div>
+                        <div>• NOT Type: Water AND Move: Surf</div>
+                        <div>• Move: Surf OR Move: Waterfall OR Move: Dive</div>
+                        <div>• (Type: Psychic OR Type: Fighting) AND Move: ThunderPunch</div>
+                    </div>
+                </div>
+                <div class="filter-input-section">
+                    <label for="filterQuery" style="font-weight: bold;">Filter Query:</label>
+                    <textarea id="filterQuery" rows="3" placeholder="Enter your filter query..."></textarea>
+                    <div class="filter-preview">
+                        <span>Matches: <span id="filterMatchCount">0</span> Pokemon</span>
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="btn secondary" id="testFilterBtn">Test Filter</button>
+                        <button class="btn success" id="createAdvancedGroupBtn">Create Group</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

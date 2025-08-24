@@ -1,10 +1,12 @@
-// Version 2.10 - Updated Speed Value UI: smaller input, color squares as delete buttons
+// Version 2.17 - Added advanced filtering system with boolean query support
 // User interface management methods
 class UIManager {
     constructor(tool) {
         this.tool = tool;
         this.speedValueRowCount = 1; // Track number of speed value rows
         this.speedModeActiveGroup = null; // Track active group in Speed Mode
+        this.markedForCombineGroupId = null; // Track which group is marked for combination
+        this.advancedGroupCounter = 0; // Track advanced groups for naming
         this.speedBoostMultipliers = {
             '-6': 2/8,   // 0.25
             '-5': 2/7,   // ~0.286
@@ -78,11 +80,11 @@ class UIManager {
         const backgroundColor = this.speedHighlightColors[colorIndex % this.speedHighlightColors.length];
         
         newRow.innerHTML = `
-            <div class="speed-color-indicator speed-deletable" style="width: 12px; height: 12px; background-color: ${backgroundColor}; border: 1px solid #333; border-radius: 2px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 9px; text-shadow: 1px 1px 1px rgba(0,0,0,0.5);">&times;</div>
+            <div class="speed-color-indicator speed-deletable" style="width: 14px; height: 14px; background-color: ${backgroundColor}; border: 1px solid #333; border-radius: 2px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 9px; text-shadow: 1px 1px 1px rgba(0,0,0,0.5);">&times;</div>
             <label style="font-weight: bold;">Value:</label>
             <input type="number" min="0" max="999" step="1" class="speed-value-input" 
                    style="width: 30px !important; padding: 2px;" placeholder="000">
-            <label style="font-weight: bold;">Boost:</label>
+            <label style="font-weight: bold; margin-left: 2px;">Boost:</label>
             <select class="speed-boost-select" style="width: 45px; padding: 2px;">
                 <option value="6">+6</option>
                 <option value="5">+5</option>
@@ -145,19 +147,17 @@ class UIManager {
     loadSpeedModeGroup() {
         const speedProfile = this.tool.profiles['speed'];
         if (speedProfile && speedProfile.speedModeGroup) {
-            // Recreate the active group reference
+            // Store the group data directly
             this.speedModeActiveGroup = {
                 id: speedProfile.speedModeGroup.id,
                 name: speedProfile.speedModeGroup.name,
                 color: speedProfile.speedModeGroup.color,
-                icons: speedProfile.speedModeGroup.iconDataIndices.map(dataIndex => 
-                    this.tool.icons.find(icon => icon.dataIndex === dataIndex)
-                ).filter(icon => icon) // Filter out any missing icons
+                iconDataIndices: speedProfile.speedModeGroup.iconDataIndices
             };
             
-            // Apply group highlights
+            // Apply group highlights immediately
             this.applySpeedModeGroupHighlights();
-            console.log('Speed Mode group loaded:', this.speedModeActiveGroup);
+            console.log('Speed Mode group loaded and highlighted:', this.speedModeActiveGroup);
         } else {
             this.speedModeActiveGroup = null;
             console.log('No Speed Mode group to load');
@@ -552,33 +552,85 @@ class UIManager {
         this.tool.groups.forEach(group => {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-item';
+            groupDiv.style.cssText = 'background: white; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 5px;';
+            
+            // First row: name/count, buttons
+            const firstRow = document.createElement('div');
+            firstRow.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
+            
+            const nameSection = document.createElement('div');
+            nameSection.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+            
+            const colorSpan = document.createElement('span');
+            colorSpan.className = 'group-color';
+            colorSpan.style.cssText = `width: 20px; height: 20px; border-radius: 3px; display: inline-block; background-color: ${group.color};`;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = `${group.name} (${group.icons.length})`;
+            
+            nameSection.appendChild(colorSpan);
+            nameSection.appendChild(nameSpan);
+            
+            const buttonsSection = document.createElement('div');
+            buttonsSection.style.cssText = 'display: flex; align-items: center; gap: 5px;';
             
             // Create focus button if in score mode and group has 36 or fewer members
-            const focusButton = this.tool.mode === 'score' && group.icons.length <= 36 && group.icons.length > 0
-                ? `<button class="group-focus-btn" onclick="window.tool?.uiManager.openFocusModal(${group.id})">Focus</button>`
-                : '';
+            if (this.tool.mode === 'score' && group.icons.length <= 36 && group.icons.length > 0) {
+                const focusBtn = document.createElement('button');
+                focusBtn.className = 'group-focus-btn';
+                focusBtn.textContent = 'Focus';
+                focusBtn.onclick = () => this.openFocusModal(group.id);
+                buttonsSection.appendChild(focusBtn);
+            }
             
             // Create "Send to Speed Mode" button if in Free Mode and group has icons
-            const sendToSpeedButton = this.tool.mode === 'free' && group.icons.length > 0
-                ? `<button class="send-to-speed-btn" onclick="window.tool?.uiManager.sendGroupToSpeedMode(${group.id})">Send to Speed</button>`
-                : '';
+            if (this.tool.mode === 'free' && group.icons.length > 0) {
+                const sendBtn = document.createElement('button');
+                sendBtn.className = 'send-to-speed-btn';
+                sendBtn.textContent = 'Send to Speed';
+                sendBtn.onclick = () => this.sendGroupToSpeedMode(group.id);
+                buttonsSection.appendChild(sendBtn);
+            }
             
-            groupDiv.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="group-color" style="background-color: ${group.color}"></span>
-                    <span>${group.name} (${group.icons.length})</span>
-                    ${focusButton}
-                    ${sendToSpeedButton}
-                </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <label class="lock-control">
-                        <input type="checkbox" ${group.locked ? 'checked' : ''} 
-                               onchange="window.tool?.toggleGroupLock(${group.id}, this.checked)">
-                        Lock
-                    </label>
-                    <button onclick="window.tool?.groupManager.deleteGroup(${group.id})" class="close-btn">&times;</button>
-                </div>
-            `;
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'close-btn';
+            deleteBtn.textContent = '×';
+            deleteBtn.onclick = () => this.tool.groupManager.deleteGroup(group.id);
+            buttonsSection.appendChild(deleteBtn);
+            
+            firstRow.appendChild(nameSection);
+            firstRow.appendChild(buttonsSection);
+            
+            // Second row: lock checkbox, combine checkbox
+            const secondRow = document.createElement('div');
+            secondRow.style.cssText = 'display: flex; align-items: center; gap: 15px;';
+            
+            // Lock control
+            const lockLabel = document.createElement('label');
+            lockLabel.className = 'lock-control';
+            const lockCheckbox = document.createElement('input');
+            lockCheckbox.type = 'checkbox';
+            lockCheckbox.checked = group.locked;
+            lockCheckbox.onchange = (e) => this.tool.toggleGroupLock(group.id, e.target.checked);
+            lockLabel.appendChild(lockCheckbox);
+            lockLabel.appendChild(document.createTextNode(' Lock'));
+            
+            // Combine control
+            const combineLabel = document.createElement('label');
+            combineLabel.className = 'lock-control'; // Reuse same styling
+            const combineCheckbox = document.createElement('input');
+            combineCheckbox.type = 'checkbox';
+            combineCheckbox.checked = this.markedForCombineGroupId === group.id;
+            combineCheckbox.onchange = (e) => this.handleCombineCheckbox(group.id, e.target.checked);
+            combineLabel.appendChild(combineCheckbox);
+            combineLabel.appendChild(document.createTextNode(' Combine Group'));
+            
+            secondRow.appendChild(lockLabel);
+            secondRow.appendChild(combineLabel);
+            
+            groupDiv.appendChild(firstRow);
+            groupDiv.appendChild(secondRow);
             groupList.appendChild(groupDiv);
         });
         
@@ -586,17 +638,315 @@ class UIManager {
         if (this.tool.mode === 'speed' && this.speedModeActiveGroup) {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-item';
+            groupDiv.style.cssText = 'background: white; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;';
             
-            groupDiv.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="group-color" style="background-color: ${this.speedModeActiveGroup.color}"></span>
-                    <span>${this.speedModeActiveGroup.name} (${this.speedModeActiveGroup.icons.length}) - Speed Highlight</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <button onclick="window.tool?.uiManager.clearSpeedModeGroup()" class="close-btn">&times;</button>
-                </div>
-            `;
+            const nameSection = document.createElement('div');
+            nameSection.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+            
+            const colorSpan = document.createElement('span');
+            colorSpan.className = 'group-color';
+            colorSpan.style.cssText = `width: 20px; height: 20px; border-radius: 3px; display: inline-block; background-color: ${this.speedModeActiveGroup.color};`;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = `${this.speedModeActiveGroup.name} (${this.speedModeActiveGroup.iconDataIndices.length}) - Speed Highlight`;
+            
+            nameSection.appendChild(colorSpan);
+            nameSection.appendChild(nameSpan);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'close-btn';
+            deleteBtn.textContent = '×';
+            deleteBtn.onclick = () => this.clearSpeedModeGroup();
+            
+            groupDiv.appendChild(nameSection);
+            groupDiv.appendChild(deleteBtn);
             groupList.appendChild(groupDiv);
+        }
+    }
+
+    handleCombineCheckbox(groupId, checked) {
+        if (checked) {
+            if (this.markedForCombineGroupId === null) {
+                // First group marked for combination
+                this.markedForCombineGroupId = groupId;
+            } else if (this.markedForCombineGroupId !== groupId) {
+                // Second group marked - combine them
+                this.combineGroups(this.markedForCombineGroupId, groupId);
+                this.markedForCombineGroupId = null; // Reset after combining
+            }
+        } else {
+            // Unchecking - clear the marked group if it's this one
+            if (this.markedForCombineGroupId === groupId) {
+                this.markedForCombineGroupId = null;
+            }
+        }
+    }
+
+    combineGroups(groupId1, groupId2) {
+        const group1 = this.tool.groups[groupId1];
+        const group2 = this.tool.groups[groupId2];
+        
+        if (!group1 || !group2) return;
+        
+        // Combine the group names
+        const combinedName = `${group1.name} + ${group2.name}`;
+        
+        // Move all icons from group2 to group1
+        group2.icons.forEach(icon => {
+            icon.groupId = groupId1;
+            group1.icons.push(icon);
+        });
+        
+        // Update group1 properties
+        group1.name = combinedName;
+        group1.field = 'combined'; // Mark as a combined group
+        
+        // Rearrange group1 to accommodate all icons
+        if (this.tool.mode === 'score') {
+            this.tool.groupManager.arrangeGroupIcons(group1);
+        } else {
+            // For non-score modes, find open spaces for all icons
+            group1.icons.forEach(icon => {
+                this.tool.groupManager.findOpenSpaceInGroup(icon, group1);
+            });
+            this.tool.groupManager.updateGroupBounds(group1);
+        }
+        
+        // Delete group2
+        this.tool.groups = this.tool.groups.filter(g => g.id !== groupId2);
+        
+        // Renumber groups to maintain sequential IDs
+        this.tool.groups.forEach((g, index) => {
+            const oldId = g.id;
+            g.id = index;
+            
+            // Update icon groupId references
+            this.tool.icons.forEach(icon => {
+                if (icon.groupId === oldId) {
+                    icon.groupId = index;
+                }
+            });
+        });
+        
+        // Update UI
+        this.updateGroupList();
+        this.updateCounts();
+        this.tool.canvasRenderer.render();
+    }
+
+    // Advanced Filter Methods
+    openAdvancedFilterModal() {
+        document.getElementById('advancedFilterModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // Reset the form
+        document.getElementById('filterQuery').value = '';
+        document.getElementById('filterMatchCount').textContent = '0';
+    }
+
+    closeAdvancedFilterModal() {
+        document.getElementById('advancedFilterModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    testAdvancedFilter() {
+        const query = document.getElementById('filterQuery').value.trim();
+        if (!query) {
+            document.getElementById('filterMatchCount').textContent = '0';
+            return;
+        }
+        
+        try {
+            const matchingIcons = this.executeAdvancedFilter(query);
+            document.getElementById('filterMatchCount').textContent = matchingIcons.length.toString();
+        } catch (error) {
+            document.getElementById('filterMatchCount').textContent = 'Error: ' + error.message;
+        }
+    }
+
+    createAdvancedGroup() {
+        const query = document.getElementById('filterQuery').value.trim();
+        if (!query) {
+            alert('Please enter a filter query');
+            return;
+        }
+        
+        try {
+            const matchingIcons = this.executeAdvancedFilter(query);
+            
+            if (matchingIcons.length === 0) {
+                alert('No Pokemon match the current filter');
+                return;
+            }
+            
+            // Create the advanced group
+            this.advancedGroupCounter++;
+            const groupName = `Adv ${this.advancedGroupCounter}`;
+            
+            const groupPosition = this.tool.groupManager.findGroupPosition();
+            const groupId = this.tool.groups.length;
+            
+            // Calculate bounds based on matching icons
+            let minWidth = 140;
+            let minHeight = 80;
+            
+            if (matchingIcons.length > 0) {
+                const maxIconWidth = Math.max(...matchingIcons.map(icon => icon.width));
+                
+                if (this.tool.mode === 'score') {
+                    const maxIconsPerColumn = 36;
+                    const columnsNeeded = Math.ceil(matchingIcons.length / maxIconsPerColumn);
+                    
+                    if (columnsNeeded === 1) {
+                        minWidth = Math.max(140, maxIconWidth + 30);
+                    } else {
+                        const columnWidth = maxIconWidth + this.tool.iconPadding;
+                        minWidth = Math.max(140, columnsNeeded * columnWidth + 20);
+                    }
+                } else {
+                    minWidth = Math.max(140, maxIconWidth * 2 + this.tool.iconPadding + 20);
+                }
+                
+                minHeight = Math.max(80, this.tool.iconHeight * 2 + this.tool.iconPadding + 35);
+            }
+            
+            const group = {
+                id: groupId,
+                name: groupName,
+                field: 'advanced',
+                value: query,
+                x: groupPosition.x,
+                y: groupPosition.y,
+                color: this.tool.groupManager.getGroupColor(groupId),
+                icons: [],
+                autoArranged: false,
+                locked: this.tool.mode === 'score',
+                bounds: {
+                    x: groupPosition.x - 10,
+                    y: groupPosition.y - 25,
+                    width: minWidth,
+                    height: minHeight
+                }
+            };
+            
+            this.tool.groups.push(group);
+            
+            // Add matching icons to the group
+            matchingIcons.forEach(icon => {
+                icon.groupId = groupId;
+                group.icons.push(icon);
+            });
+            
+            // Arrange the group
+            if (group.icons.length > 0) {
+                this.tool.groupManager.initialArrangeGroupIcons(group);
+                group.autoArranged = true;
+                
+                if (this.tool.mode === 'speed') {
+                    this.tool.groupManager.arrangeIconsBySpeed();
+                } else {
+                    this.tool.groupManager.arrangeAllPoolIcons();
+                }
+            }
+            
+            this.updateGroupList();
+            this.updateCounts();
+            this.closeAdvancedFilterModal();
+            
+        } catch (error) {
+            alert('Error in filter query: ' + error.message);
+        }
+    }
+
+    executeAdvancedFilter(query) {
+        // Only get ungrouped icons
+        const availableIcons = this.tool.icons.filter(icon => icon.groupId === null);
+        
+        if (availableIcons.length === 0) {
+            return [];
+        }
+        
+        // Parse and execute the query
+        const result = this.parseFilterQuery(query, availableIcons);
+        return result;
+    }
+
+    parseFilterQuery(query, icons) {
+        // Normalize the query - replace logical operators with symbols for easier parsing
+        let normalizedQuery = query
+            .replace(/\bAND\b/gi, ' && ')
+            .replace(/\bOR\b/gi, ' || ')
+            .replace(/\bNOT\b/gi, ' ! ');
+        
+        // Find all Type: and Move: expressions
+        const expressions = [];
+        const typeRegex = /Type:\s*([^&|!()]+)/gi;
+        const moveRegex = /Move:\s*([^&|!()]+)/gi;
+        
+        let match;
+        let exprIndex = 0;
+        
+        // Replace Type: expressions with placeholders
+        while ((match = typeRegex.exec(normalizedQuery)) !== null) {
+            const placeholder = `__TYPE_${exprIndex}__`;
+            expressions[exprIndex] = {
+                type: 'type',
+                value: match[1].trim()
+            };
+            normalizedQuery = normalizedQuery.replace(match[0], placeholder);
+            exprIndex++;
+        }
+        
+        // Reset regex and Replace Move: expressions with placeholders
+        const moveRegexReset = /Move:\s*([^&|!()]+)/gi;
+        while ((match = moveRegexReset.exec(normalizedQuery)) !== null) {
+            const placeholder = `__MOVE_${exprIndex}__`;
+            expressions[exprIndex] = {
+                type: 'move',
+                value: match[1].trim()
+            };
+            normalizedQuery = normalizedQuery.replace(match[0], placeholder);
+            exprIndex++;
+        }
+        
+        // Filter icons based on the query
+        return icons.filter(icon => {
+            try {
+                return this.evaluateFilterExpression(normalizedQuery, expressions, icon);
+            } catch (error) {
+                console.error('Error evaluating filter for icon:', icon.label, error);
+                return false;
+            }
+        });
+    }
+
+    evaluateFilterExpression(expression, expressions, icon) {
+        // Replace placeholders with actual boolean evaluations
+        let evalExpression = expression;
+        
+        expressions.forEach((expr, index) => {
+            let result = false;
+            
+            if (expr.type === 'type') {
+                result = this.tool.groupManager.hasType(icon, expr.value);
+            } else if (expr.type === 'move') {
+                result = this.tool.groupManager.hasMove(icon, expr.value);
+            }
+            
+            const placeholder = expr.type === 'type' ? `__TYPE_${index}__` : `__MOVE_${index}__`;
+            evalExpression = evalExpression.replace(placeholder, result.toString());
+        });
+        
+        // Clean up the expression for evaluation
+        evalExpression = evalExpression
+            .replace(/\s+/g, ' ')
+            .trim();
+        
+        // Safely evaluate the boolean expression
+        try {
+            return Function('"use strict"; return (' + evalExpression + ')')();
+        } catch (error) {
+            throw new Error('Invalid query syntax');
         }
     }
 
@@ -609,7 +959,7 @@ class UIManager {
             this.tool.profiles['speed'] = { groups: [], iconStates: [], selectedIcons: [], initialized: false };
         }
         
-        // Store the group data for Speed Mode (using consistent property name)
+        // Store the group data for Speed Mode (replaces any existing group)
         this.tool.profiles['speed'].speedModeGroup = {
             id: group.id,
             name: group.name,
@@ -627,7 +977,7 @@ class UIManager {
         }
         
         console.log('Applying Speed Mode group highlights for:', this.speedModeActiveGroup.name);
-        console.log('Group contains icons with data indices:', this.speedModeActiveGroup.icons.map(icon => icon.dataIndex));
+        console.log('Group contains data indices:', this.speedModeActiveGroup.iconDataIndices);
         
         // Clear existing group highlights
         this.tool.icons.forEach(icon => {
@@ -656,14 +1006,12 @@ class UIManager {
             // For combined icons, check if any component is in the group
             if (icon.originalIcons) {
                 const result = icon.originalIcons.some(originalIcon => 
-                    this.speedModeActiveGroup.icons.some(groupIcon => 
-                        groupIcon.dataIndex === originalIcon.dataIndex
-                    )
+                    this.speedModeActiveGroup.iconDataIndices.includes(originalIcon.dataIndex)
                 );
                 if (result) {
                     console.log(`Combined icon ${icon.label} matches group via component icon with dataIndex:`, 
                         icon.originalIcons.find(orig => 
-                            this.speedModeActiveGroup.icons.some(groupIcon => groupIcon.dataIndex === orig.dataIndex)
+                            this.speedModeActiveGroup.iconDataIndices.includes(orig.dataIndex)
                         )?.dataIndex
                     );
                 }
@@ -671,9 +1019,7 @@ class UIManager {
             }
         } else {
             // For regular icons, check direct membership
-            const result = this.speedModeActiveGroup.icons.some(groupIcon => 
-                groupIcon.dataIndex === icon.dataIndex
-            );
+            const result = this.speedModeActiveGroup.iconDataIndices.includes(icon.dataIndex);
             if (result) {
                 console.log(`Regular icon ${icon.label} (dataIndex: ${icon.dataIndex}) matches group directly`);
             }
@@ -684,6 +1030,9 @@ class UIManager {
     }
 
     clearSpeedModeGroup() {
+        console.log('Clearing Speed Mode group...');
+        
+        // Clear the active group reference
         this.speedModeActiveGroup = null;
         
         // Clear group from Speed Mode profile
@@ -691,15 +1040,18 @@ class UIManager {
             delete this.tool.profiles['speed'].speedModeGroup;
         }
         
-        // Clear group highlights
+        // Clear group highlights from all icons
         this.tool.icons.forEach(icon => {
             delete icon.speedGroupHighlight;
         });
         
+        // Update the group list display
         this.updateGroupList();
+        
+        // Re-render the canvas to show changes
         this.tool.canvasRenderer.render();
         
-        console.log('Speed Mode group cleared');
+        console.log('Speed Mode group cleared successfully');
     }
 
     updateCounts() {

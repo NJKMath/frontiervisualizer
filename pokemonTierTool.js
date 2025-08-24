@@ -1,4 +1,4 @@
-// Version 2.8 - Updated group creation options and placeholder text handling
+// Version 2.10 - Added advanced filtering system with boolean query support
 // Main Pokemon Tier Tool class
 class PokemonTierTool {
     constructor() {
@@ -51,6 +51,9 @@ class PokemonTierTool {
         this.focusedGroup = null;
         this.draggedFocusCard = null;
         this.focusCardOrder = [];
+        
+        // Advanced filter properties
+        this.filterTestTimeout = null;
         
         // Layout properties
         this.iconWidth = 60;
@@ -118,6 +121,27 @@ class PokemonTierTool {
             this.groupManager.createNewGroup();
         });
 
+        document.getElementById('advancedFilterBtn').addEventListener('click', () => {
+            this.uiManager.openAdvancedFilterModal();
+        });
+
+        document.getElementById('testFilterBtn').addEventListener('click', () => {
+            this.uiManager.testAdvancedFilter();
+        });
+
+        document.getElementById('createAdvancedGroupBtn').addEventListener('click', () => {
+            this.uiManager.createAdvancedGroup();
+        });
+
+        // Auto-test filter as user types
+        document.getElementById('filterQuery').addEventListener('input', () => {
+            // Debounce the input to avoid excessive testing
+            clearTimeout(this.filterTestTimeout);
+            this.filterTestTimeout = setTimeout(() => {
+                this.uiManager.testAdvancedFilter();
+            }, 300);
+        });
+
         document.getElementById('clearAllSelected').addEventListener('click', () => {
             this.uiManager.clearSidebar();
         });
@@ -178,31 +202,8 @@ class PokemonTierTool {
             if (newMode === 'speed') {
                 this.uiManager.showSpeedValueSection();
                 
-                // Load Speed Mode group directly from profile
-                const speedProfile = this.profiles['speed'];
-                console.log('Speed profile when switching to Speed Mode:', speedProfile);
-                
-                if (speedProfile && speedProfile.speedModeGroup) {
-                    console.log('Loading Speed Mode group:', speedProfile.speedModeGroup);
-                    
-                    // Recreate the active group reference
-                    this.uiManager.speedModeActiveGroup = {
-                        id: speedProfile.speedModeGroup.id,
-                        name: speedProfile.speedModeGroup.name,
-                        color: speedProfile.speedModeGroup.color,
-                        icons: speedProfile.speedModeGroup.iconDataIndices.map(dataIndex => 
-                            this.icons.find(icon => icon.dataIndex === dataIndex)
-                        ).filter(icon => icon) // Filter out any missing icons
-                    };
-                    
-                    console.log('Created speedModeActiveGroup:', this.uiManager.speedModeActiveGroup);
-                    
-                    // Apply group highlights
-                    this.uiManager.applySpeedModeGroupHighlights();
-                } else {
-                    console.log('No Speed Mode group found in profile');
-                    this.uiManager.speedModeActiveGroup = null;
-                }
+                // Load Speed Mode group from profile after icons are arranged
+                this.uiManager.loadSpeedModeGroup();
                 
                 // Update speed highlights
                 this.uiManager.updateSpeedHighlights();
@@ -217,10 +218,8 @@ class PokemonTierTool {
             // Update UI to reflect new mode
             this.uiManager.updateGroupList();
             
-            // Only render if not switching to Speed Mode (Speed Mode handles its own rendering)
-            if (newMode !== 'speed') {
-                this.canvasRenderer.render();
-            }
+            // Always render after mode switch
+            this.canvasRenderer.render();
         });
 
         // View on click checkbox
@@ -272,6 +271,13 @@ class PokemonTierTool {
         document.getElementById('focusModal').addEventListener('click', (e) => {
             if (e.target.id === 'focusModal') {
                 this.uiManager.closeFocusModal();
+            }
+        });
+
+        // Advanced filter modal click outside to close
+        document.getElementById('advancedFilterModal').addEventListener('click', (e) => {
+            if (e.target.id === 'advancedFilterModal') {
+                this.uiManager.closeAdvancedFilterModal();
             }
         });
     }

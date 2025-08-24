@@ -1,4 +1,4 @@
-// Version 2.6 - Updated group creation: disabled in Speed Mode, added Species option, improved dual type search
+// Version 2.10 - Fixed Free Mode group layout to be more square, reordered dropdown
 // Group and icon management methods
 class GroupManager {
     constructor(tool) {
@@ -65,7 +65,7 @@ class GroupManager {
                 id: this.tool.uiManager.speedModeActiveGroup.id,
                 name: this.tool.uiManager.speedModeActiveGroup.name,
                 color: this.tool.uiManager.speedModeActiveGroup.color,
-                iconDataIndices: this.tool.uiManager.speedModeActiveGroup.icons.map(icon => icon.dataIndex)
+                iconDataIndices: this.tool.uiManager.speedModeActiveGroup.iconDataIndices
             };
         }
         
@@ -259,6 +259,12 @@ class GroupManager {
     }
 
     initializeFreshProfile(mode) {
+        // For Speed Mode, preserve any existing speedModeGroup before clearing
+        let preservedSpeedModeGroup = null;
+        if (mode === 'speed' && this.tool.profiles[mode] && this.tool.profiles[mode].speedModeGroup) {
+            preservedSpeedModeGroup = this.tool.profiles[mode].speedModeGroup;
+        }
+        
         // Clear current state
         this.tool.uiManager.clearSidebar();
         this.tool.groups = [];
@@ -274,6 +280,11 @@ class GroupManager {
             selectedIcons: [],
             initialized: true
         };
+        
+        // Restore the preserved speedModeGroup if this is Speed Mode
+        if (mode === 'speed' && preservedSpeedModeGroup) {
+            this.tool.profiles[mode].speedModeGroup = preservedSpeedModeGroup;
+        }
         
         // Update UI
         this.tool.uiManager.updateGroupList();
@@ -346,7 +357,7 @@ class GroupManager {
         // Get nature modifier for speed
         const natureModifier = this.getNatureModifier(nature, 'spe');
         
-        // Calculate SPE stat: ⌊(⌊(2×Base+IV+⌊EV/4⌋)×Level/100⌋+5)×Nature⌋
+        // Calculate SPE stat: ⌊ ⌊ (2×Base+IV+⌊ EV/4⌋)×Level/100⌋+5)×Nature⌋
         const baseStat = Math.floor((2 * base + ivs + Math.floor(evs / 4)) * level / 100) + 5;
         return Math.floor(baseStat * natureModifier);
     }
@@ -409,9 +420,17 @@ class GroupManager {
             icon.data['Move 4']
         ].filter(Boolean);
         
-        return moves.some(move => 
-            move && move.toLowerCase().includes(targetMove.toLowerCase())
-        );
+        // Normalize function to handle case and spaces for exact matching
+        const normalizeMove = (move) => {
+            return move.toLowerCase().replace(/[\s-]/g, '');
+        };
+        
+        const normalizedTarget = normalizeMove(targetMove);
+        
+        return moves.some(move => {
+            if (!move) return false;
+            return normalizeMove(move) === normalizedTarget;
+        });
     }
 
     arrangeIconsBySpeed() {
@@ -724,7 +743,11 @@ class GroupManager {
                     minWidth = Math.max(140, columnsNeeded * columnWidth + 20);
                 }
             } else {
-                minWidth = Math.max(140, maxIconWidth * 2 + this.tool.iconPadding + 20);
+                // Free Mode: Calculate optimal columns for square layout
+                const iconCount = matchingIcons.length;
+                const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount)));
+                const columnWidth = maxIconWidth + this.tool.iconPadding;
+                minWidth = Math.max(140, optimalColumns * columnWidth + 20);
             }
             
             minHeight = Math.max(80, this.tool.iconHeight * 2 + this.tool.iconPadding + 35);
@@ -732,7 +755,7 @@ class GroupManager {
         
         const group = {
             id: groupId,
-            name: field === 'custom' ? value : `${field}: ${value}`,
+            name: field === 'custom' ? value : value, // Just the value, not "Field: value"
             field: field,
             value: value,
             x: groupPosition.x,
@@ -977,9 +1000,13 @@ class GroupManager {
             scoredIcons.forEach(icon => delete icon.calculatedY);
             
         } else {
-            // Free/Speed Mode: Pack icons within the group area
+            // Free/Speed Mode: Pack icons within the group area as square as possible
             const maxIconWidth = Math.max(...group.icons.map(icon => icon.width));
-            const groupWidth = Math.max(180, maxIconWidth * 4 + this.tool.iconPadding * 3);
+            
+            // Calculate optimal columns for roughly square layout
+            const iconCount = group.icons.length;
+            const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount)));
+            const groupWidth = Math.max(180, maxIconWidth * optimalColumns + this.tool.iconPadding * (optimalColumns - 1) + 20);
             
             let currentX = group.x;
             let currentY = group.y;
@@ -1029,7 +1056,11 @@ class GroupManager {
                     minWidth = Math.max(140, calculatedWidth);
                 }
             } else {
-                minWidth = Math.max(140, maxIconWidth * 2 + this.tool.iconPadding + 20);
+                // Free Mode: Use square layout calculations
+                const iconCount = group.icons.length;
+                const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount)));
+                const columnWidth = maxIconWidth + this.tool.iconPadding;
+                minWidth = Math.max(140, optimalColumns * columnWidth + 20);
             }
             
             minHeight = Math.max(80, this.tool.iconHeight * 2 + this.tool.iconPadding + 35);
@@ -1206,9 +1237,13 @@ class GroupManager {
             scoredIcons.forEach(icon => delete icon.calculatedY);
             
         } else {
-            // Free/Speed Mode: Pack icons within the group area
+            // Free/Speed Mode: Pack icons within the group area as square as possible
             const maxIconWidth = Math.max(...group.icons.map(icon => icon.width));
-            const groupWidth = Math.max(180, maxIconWidth * 4 + this.tool.iconPadding * 3);
+            
+            // Calculate optimal columns for roughly square layout
+            const iconCount = group.icons.length;
+            const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount)));
+            const groupWidth = Math.max(180, maxIconWidth * optimalColumns + this.tool.iconPadding * (optimalColumns - 1) + 20);
             
             let currentX = group.x;
             let currentY = group.y;
