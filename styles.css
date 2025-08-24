@@ -454,7 +454,7 @@ select {
     border-width: 3px !important;
 }
 
-/* Speed Mode group highlight - distinct bright green color */
+/* Speed Mode group highlight */
 .speed-group-highlight {
     background-color: #00e676 !important;
     border-color: #00c853 !important;
