@@ -1,4 +1,4 @@
-// Version 2.10 - Fixed Free Mode group layout to be more square, reordered dropdown
+// Version 2.11 - Changed group layout to 2:1 height:width ratio for better icon arrangement
 // Group and icon management methods
 class GroupManager {
     constructor(tool) {
@@ -743,9 +743,9 @@ class GroupManager {
                     minWidth = Math.max(140, columnsNeeded * columnWidth + 20);
                 }
             } else {
-                // Free Mode: Calculate optimal columns for square layout
+                // Free Mode: Calculate optimal columns for 2:1 height:width ratio
                 const iconCount = matchingIcons.length;
-                const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount)));
+                const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount / 2)));
                 const columnWidth = maxIconWidth + this.tool.iconPadding;
                 minWidth = Math.max(140, optimalColumns * columnWidth + 20);
             }
@@ -1000,12 +1000,12 @@ class GroupManager {
             scoredIcons.forEach(icon => delete icon.calculatedY);
             
         } else {
-            // Free/Speed Mode: Pack icons within the group area as square as possible
+            // Free/Speed Mode: Pack icons within the group area with 2:1 height:width ratio
             const maxIconWidth = Math.max(...group.icons.map(icon => icon.width));
             
-            // Calculate optimal columns for roughly square layout
+            // Calculate optimal columns for roughly 2:1 height:width ratio
             const iconCount = group.icons.length;
-            const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount)));
+            const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount / 2)));
             const groupWidth = Math.max(180, maxIconWidth * optimalColumns + this.tool.iconPadding * (optimalColumns - 1) + 20);
             
             let currentX = group.x;
@@ -1056,9 +1056,9 @@ class GroupManager {
                     minWidth = Math.max(140, calculatedWidth);
                 }
             } else {
-                // Free Mode: Use square layout calculations
+                // Free Mode: Use 2:1 height:width ratio layout calculations
                 const iconCount = group.icons.length;
-                const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount)));
+                const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount / 2)));
                 const columnWidth = maxIconWidth + this.tool.iconPadding;
                 minWidth = Math.max(140, optimalColumns * columnWidth + 20);
             }
@@ -1237,12 +1237,12 @@ class GroupManager {
             scoredIcons.forEach(icon => delete icon.calculatedY);
             
         } else {
-            // Free/Speed Mode: Pack icons within the group area as square as possible
+            // Free/Speed Mode: Pack icons within the group area with 2:1 height:width ratio
             const maxIconWidth = Math.max(...group.icons.map(icon => icon.width));
             
-            // Calculate optimal columns for roughly square layout
+            // Calculate optimal columns for roughly 2:1 height:width ratio
             const iconCount = group.icons.length;
-            const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount)));
+            const optimalColumns = Math.max(2, Math.ceil(Math.sqrt(iconCount / 2)));
             const groupWidth = Math.max(180, maxIconWidth * optimalColumns + this.tool.iconPadding * (optimalColumns - 1) + 20);
             
             let currentX = group.x;

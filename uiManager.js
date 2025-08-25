@@ -1,4 +1,4 @@
-// Version 2.17 - Added advanced filtering system with boolean query support
+// Version 2.19 - Redesigned group info display: clickable group names for renaming, moved size to second row
 // User interface management methods
 class UIManager {
     constructor(tool) {
@@ -554,22 +554,26 @@ class UIManager {
             groupDiv.className = 'group-item';
             groupDiv.style.cssText = 'background: white; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 5px;';
             
-            // First row: name/count, buttons
+            // First row: name button, action buttons
             const firstRow = document.createElement('div');
             firstRow.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
             
             const nameSection = document.createElement('div');
-            nameSection.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+            nameSection.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1;';
             
-            const colorSpan = document.createElement('span');
-            colorSpan.className = 'group-color';
-            colorSpan.style.cssText = `width: 20px; height: 20px; border-radius: 3px; display: inline-block; background-color: ${group.color};`;
+            const nameButton = document.createElement('button');
+            nameButton.textContent = group.name;
+            nameButton.style.cssText = 'background: none; border: 1px solid #ddd; border-radius: 3px; padding: 3px 8px; cursor: pointer; font-size: 14px; color: #333; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+            nameButton.title = 'Click to rename group';
+            nameButton.onclick = () => this.renameGroup(group.id, nameButton);
+            nameButton.addEventListener('mouseenter', () => {
+                nameButton.style.backgroundColor = '#f0f0f0';
+            });
+            nameButton.addEventListener('mouseleave', () => {
+                nameButton.style.backgroundColor = 'transparent';
+            });
             
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = `${group.name} (${group.icons.length})`;
-            
-            nameSection.appendChild(colorSpan);
-            nameSection.appendChild(nameSpan);
+            nameSection.appendChild(nameButton);
             
             const buttonsSection = document.createElement('div');
             buttonsSection.style.cssText = 'display: flex; align-items: center; gap: 5px;';
@@ -579,6 +583,7 @@ class UIManager {
                 const focusBtn = document.createElement('button');
                 focusBtn.className = 'group-focus-btn';
                 focusBtn.textContent = 'Focus';
+                focusBtn.style.backgroundColor = group.color;
                 focusBtn.onclick = () => this.openFocusModal(group.id);
                 buttonsSection.appendChild(focusBtn);
             }
@@ -588,6 +593,7 @@ class UIManager {
                 const sendBtn = document.createElement('button');
                 sendBtn.className = 'send-to-speed-btn';
                 sendBtn.textContent = 'Send to Speed';
+                sendBtn.style.backgroundColor = group.color;
                 sendBtn.onclick = () => this.sendGroupToSpeedMode(group.id);
                 buttonsSection.appendChild(sendBtn);
             }
@@ -596,19 +602,26 @@ class UIManager {
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'close-btn';
             deleteBtn.textContent = '×';
+            deleteBtn.style.backgroundColor = group.color;
             deleteBtn.onclick = () => this.tool.groupManager.deleteGroup(group.id);
             buttonsSection.appendChild(deleteBtn);
             
             firstRow.appendChild(nameSection);
             firstRow.appendChild(buttonsSection);
             
-            // Second row: lock checkbox, combine checkbox
+            // Second row: size, lock checkbox, combine checkbox
             const secondRow = document.createElement('div');
-            secondRow.style.cssText = 'display: flex; align-items: center; gap: 15px;';
+            secondRow.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+            
+            // Size info
+            const sizeSpan = document.createElement('span');
+            sizeSpan.textContent = `Size: ${group.icons.length}`;
+            sizeSpan.style.cssText = 'font-size: 13px; color: #666; font-weight: bold; min-width: 50px;';
             
             // Lock control
             const lockLabel = document.createElement('label');
             lockLabel.className = 'lock-control';
+            lockLabel.style.cssText = 'font-size: 13px; display: flex; align-items: center; gap: 3px; user-select: none;';
             const lockCheckbox = document.createElement('input');
             lockCheckbox.type = 'checkbox';
             lockCheckbox.checked = group.locked;
@@ -619,13 +632,15 @@ class UIManager {
             // Combine control
             const combineLabel = document.createElement('label');
             combineLabel.className = 'lock-control'; // Reuse same styling
+            combineLabel.style.cssText = 'font-size: 13px; display: flex; align-items: center; gap: 3px; user-select: none;';
             const combineCheckbox = document.createElement('input');
             combineCheckbox.type = 'checkbox';
             combineCheckbox.checked = this.markedForCombineGroupId === group.id;
             combineCheckbox.onchange = (e) => this.handleCombineCheckbox(group.id, e.target.checked);
             combineLabel.appendChild(combineCheckbox);
-            combineLabel.appendChild(document.createTextNode(' Combine Group'));
+            combineLabel.appendChild(document.createTextNode(' Combine'));
             
+            secondRow.appendChild(sizeSpan);
             secondRow.appendChild(lockLabel);
             secondRow.appendChild(combineLabel);
             
@@ -641,27 +656,146 @@ class UIManager {
             groupDiv.style.cssText = 'background: white; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;';
             
             const nameSection = document.createElement('div');
-            nameSection.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+            nameSection.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1;';
             
-            const colorSpan = document.createElement('span');
-            colorSpan.className = 'group-color';
-            colorSpan.style.cssText = `width: 20px; height: 20px; border-radius: 3px; display: inline-block; background-color: ${this.speedModeActiveGroup.color};`;
+            const nameButton = document.createElement('button');
+            nameButton.textContent = this.speedModeActiveGroup.name;
+            nameButton.style.cssText = 'background: none; border: 1px solid #ddd; border-radius: 3px; padding: 3px 8px; cursor: pointer; font-size: 14px; color: #333; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+            nameButton.title = 'Click to rename group';
+            nameButton.onclick = () => this.renameSpeedModeGroup(nameButton);
+            nameButton.addEventListener('mouseenter', () => {
+                nameButton.style.backgroundColor = '#f0f0f0';
+            });
+            nameButton.addEventListener('mouseleave', () => {
+                nameButton.style.backgroundColor = 'transparent';
+            });
             
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = `${this.speedModeActiveGroup.name} (${this.speedModeActiveGroup.iconDataIndices.length}) - Speed Highlight`;
+            nameSection.appendChild(nameButton);
             
-            nameSection.appendChild(colorSpan);
-            nameSection.appendChild(nameSpan);
+            const sizeInfo = document.createElement('div');
+            sizeInfo.textContent = `Size: ${this.speedModeActiveGroup.iconDataIndices.length}`;
+            sizeInfo.style.cssText = 'font-size: 13px; color: #666; font-weight: bold; margin-left: 10px;';
+            nameSection.appendChild(sizeInfo);
             
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'close-btn';
             deleteBtn.textContent = '×';
+            deleteBtn.style.backgroundColor = this.speedModeActiveGroup.color;
             deleteBtn.onclick = () => this.clearSpeedModeGroup();
             
             groupDiv.appendChild(nameSection);
             groupDiv.appendChild(deleteBtn);
             groupList.appendChild(groupDiv);
         }
+    }
+
+    renameGroup(groupId, nameButton) {
+        const group = this.tool.groups[groupId];
+        if (!group) return;
+        
+        // Create input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = group.name;
+        input.style.cssText = 'border: 1px solid #007bff; border-radius: 3px; padding: 3px 8px; font-size: 14px; max-width: 130px;';
+        
+        // Replace button with input
+        const parentNode = nameButton.parentNode;
+        parentNode.replaceChild(input, nameButton);
+        
+        // Focus and select all text
+        input.focus();
+        input.select();
+        
+        const confirmRename = () => {
+            const newName = input.value.trim();
+            if (newName && newName !== group.name) {
+                group.name = newName;
+                console.log(`Renamed group ${groupId} to: ${newName}`);
+            }
+            
+            // Restore button
+            nameButton.textContent = group.name;
+            parentNode.replaceChild(nameButton, input);
+        };
+        
+        const cancelRename = () => {
+            // Restore button without changes
+            parentNode.replaceChild(nameButton, input);
+        };
+        
+        // Handle Enter and Escape keys
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmRename();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelRename();
+            }
+        });
+        
+        // Handle blur (clicking away)
+        input.addEventListener('blur', () => {
+            confirmRename();
+        });
+    }
+
+    renameSpeedModeGroup(nameButton) {
+        if (!this.speedModeActiveGroup) return;
+        
+        // Create input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = this.speedModeActiveGroup.name;
+        input.style.cssText = 'border: 1px solid #007bff; border-radius: 3px; padding: 3px 8px; font-size: 14px; max-width: 180px;';
+        
+        // Replace button with input
+        const parentNode = nameButton.parentNode;
+        parentNode.replaceChild(input, nameButton);
+        
+        // Focus and select all text
+        input.focus();
+        input.select();
+        
+        const confirmRename = () => {
+            const newName = input.value.trim();
+            if (newName && newName !== this.speedModeActiveGroup.name) {
+                this.speedModeActiveGroup.name = newName;
+                
+                // Also update the stored Speed Mode group in profiles
+                if (this.tool.profiles['speed'] && this.tool.profiles['speed'].speedModeGroup) {
+                    this.tool.profiles['speed'].speedModeGroup.name = newName;
+                }
+                
+                console.log(`Renamed Speed Mode group to: ${newName}`);
+            }
+            
+            // Restore button
+            nameButton.textContent = this.speedModeActiveGroup.name;
+            parentNode.replaceChild(nameButton, input);
+        };
+        
+        const cancelRename = () => {
+            // Restore button without changes
+            parentNode.replaceChild(nameButton, input);
+        };
+        
+        // Handle Enter and Escape keys
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmRename();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelRename();
+            }
+        });
+        
+        // Handle blur (clicking away)
+        input.addEventListener('blur', () => {
+            confirmRename();
+        });
     }
 
     handleCombineCheckbox(groupId, checked) {

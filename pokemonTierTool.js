@@ -1,4 +1,4 @@
-// Version 2.10 - Added advanced filtering system with boolean query support
+// Version 2.11 - Auto-load CSV file on startup, removed manual file upload
 // Main Pokemon Tier Tool class
 class PokemonTierTool {
     constructor() {
@@ -81,6 +81,9 @@ class PokemonTierTool {
         this.setupEventListeners();
         this.canvasRenderer.setupCanvas();
         
+        // Auto-load the CSV file
+        this.loadCSV();
+        
         // Initialize global controls
         document.getElementById('globalIVs').value = this.globalIVs;
         document.getElementById('globalLevel').value = this.globalLevel;
@@ -94,11 +97,6 @@ class PokemonTierTool {
     }
 
     setupEventListeners() {
-        // File input
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            this.loadCSV(e.target.files[0]);
-        });
-
         // Canvas events
         this.canvas.addEventListener('mousedown', this.canvasRenderer.handleMouseDown.bind(this.canvasRenderer));
         this.canvas.addEventListener('mousemove', this.canvasRenderer.handleMouseMove.bind(this.canvasRenderer));
@@ -282,31 +280,43 @@ class PokemonTierTool {
         });
     }
 
-    async loadCSV(file) {
-        if (!file) return;
+    async loadCSV() {
+        try {
+            document.getElementById('dataStatus').textContent = 'Loading data...';
+            
+            const response = await fetch('gen3frontiersetsgroup3.csv');
+            if (!response.ok) {
+                throw new Error(`Failed to load CSV: ${response.status} ${response.statusText}`);
+            }
+            
+            const text = await response.text();
+            const parsed = Papa.parse(text, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true
+            });
 
-        const text = await file.text();
-        const parsed = Papa.parse(text, {
-            header: true,
-            dynamicTyping: true,
-            skipEmptyLines: true
-        });
-
-        this.data = parsed.data;
-        
-        // Reset all profiles when new data is loaded
-        this.profiles = {
-            free: { groups: [], iconStates: [], selectedIcons: [], initialized: false },
-            score: { groups: [], iconStates: [], selectedIcons: [], initialized: false },
-            speed: { groups: [], iconStates: [], selectedIcons: [], initialized: false }
-        };
-        
-        // Initialize current mode with fresh data
-        this.groupManager.initializeFreshProfile(this.mode);
-        
-        document.getElementById('dataStatus').textContent = 
-            `Loaded ${this.data.length} Pokemon`;
-        this.uiManager.updateCounts();
+            this.data = parsed.data;
+            
+            // Reset all profiles when new data is loaded
+            this.profiles = {
+                free: { groups: [], iconStates: [], selectedIcons: [], initialized: false },
+                score: { groups: [], iconStates: [], selectedIcons: [], initialized: false },
+                speed: { groups: [], iconStates: [], selectedIcons: [], initialized: false }
+            };
+            
+            // Initialize current mode with fresh data
+            this.groupManager.initializeFreshProfile(this.mode);
+            
+            document.getElementById('dataStatus').textContent = 
+                `Loaded ${this.data.length} Pokemon`;
+            this.uiManager.updateCounts();
+            
+        } catch (error) {
+            console.error('Error loading CSV:', error);
+            document.getElementById('dataStatus').textContent = 
+                'Error loading data. Please check that gen3frontiersetsgroup3.csv exists.';
+        }
     }
 
     updateIconScore(iconId, scoreValue) {
