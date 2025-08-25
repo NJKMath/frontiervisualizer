@@ -1,4 +1,4 @@
-// Version 2.11 - Changed group layout to 2:1 height:width ratio for better icon arrangement
+// Version 2.12 - Removed unused tierNumber code
 // Group and icon management methods
 class GroupManager {
     constructor(tool) {
@@ -43,7 +43,6 @@ class GroupManager {
             label: icon.label,
             selected: icon.selected,
             groupId: icon.groupId,
-            tierNumber: icon.tierNumber,
             score: icon.score,
             types: [...icon.types],
             isCombined: icon.isCombined,
@@ -140,7 +139,6 @@ class GroupManager {
                                 label: combinedLabel,
                                 selected: iconState.selected,
                                 groupId: iconState.groupId,
-                                tierNumber: iconState.tierNumber,
                                 score: iconState.score,
                                 types: originalIcons[0].types,
                                 isCombined: true,
@@ -171,7 +169,6 @@ class GroupManager {
                             label: iconState.label,
                             selected: iconState.selected,
                             groupId: iconState.groupId,
-                            tierNumber: iconState.tierNumber,
                             score: iconState.score,
                             types: iconState.types,
                             isCombined: true,
@@ -191,7 +188,6 @@ class GroupManager {
                     icon.y = iconState.y;
                     icon.selected = iconState.selected;
                     icon.groupId = iconState.groupId;
-                    icon.tierNumber = iconState.tierNumber;
                     icon.score = iconState.score;
                 }
             }
@@ -312,7 +308,6 @@ class GroupManager {
                 label: label,
                 selected: false,
                 groupId: null,
-                tierNumber: null,
                 score: null,
                 types: this.parseTypes(pokemon.Type),
                 baseStats: this.parseBaseStats(pokemon),
@@ -522,7 +517,6 @@ class GroupManager {
                     label: combinedLabel,
                     selected: wasSelected,
                     groupId: null,
-                    tierNumber: null,
                     score: null,
                     types: group[0].types,
                     isCombined: true,

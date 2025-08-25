@@ -1,4 +1,4 @@
-// Version 2.4 - Enhanced dual highlighting: group + speed values, removed shadow effects
+// Version 2.5 - Removed unused tierNumber rendering code
 // Canvas rendering and interaction methods
 class CanvasRenderer {
     constructor(tool) {
@@ -157,21 +157,6 @@ class CanvasRenderer {
             );
             
             this.tool.ctx.textBaseline = 'alphabetic';
-            
-            // Tier number if assigned (bottom-right corner)
-            if (icon.tierNumber !== null) {
-                this.tool.ctx.fillStyle = '#ff0000';
-                this.tool.ctx.font = 'bold 12px Arial';
-                this.tool.ctx.textAlign = 'right';
-                this.tool.ctx.textBaseline = 'bottom';
-                this.tool.ctx.fillText(
-                    icon.tierNumber.toString(),
-                    icon.x + icon.width - 2,
-                    icon.y + icon.height - 2
-                );
-                this.tool.ctx.textAlign = 'center';
-                this.tool.ctx.textBaseline = 'alphabetic';
-            }
         });
 
         this.tool.ctx.restore();

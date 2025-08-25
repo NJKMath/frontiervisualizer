@@ -1,4 +1,4 @@
-// Version 2.19 - Redesigned group info display: clickable group names for renaming, moved size to second row
+// Version 2.20 - Removed unused tierNumber code
 // User interface management methods
 class UIManager {
     constructor(tool) {
@@ -255,7 +255,6 @@ class UIManager {
             label: label,
             selected: false,
             groupId: null,
-            tierNumber: null,
             score: null,
             types: [],
             baseStats: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: boostedSpeed },
@@ -1544,7 +1543,7 @@ class UIManager {
             const startX = this.tool.scaleWidth + 20;
             icon.x = startX;
         } else if (this.tool.mode !== 'speed') {
-            // Unscored icons or non-Score modes: go to pool
+            // Unscored icons or non-Speed modes: go to pool
             // In Speed Mode, icon stays where it is (locked to speed position)
             icon.y = this.tool.poolStartY;
         }

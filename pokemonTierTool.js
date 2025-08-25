@@ -1,4 +1,4 @@
-// Version 2.11 - Auto-load CSV file on startup, removed manual file upload
+// Version 2.12 - Auto-load CSV file on startup, removed manual file upload, removed unused tierNumber code
 // Main Pokemon Tier Tool class
 class PokemonTierTool {
     constructor() {
@@ -602,7 +602,6 @@ class PokemonTierTool {
                             label: combinedLabel,
                             selected: iconData.selected,
                             groupId: iconData.groupId,
-                            tierNumber: iconData.tierNumber,
                             score: iconData.score,
                             types: originalIcons[0].types,
                             isCombined: true,
@@ -634,7 +633,6 @@ class PokemonTierTool {
                     targetIcon.y = iconData.y;
                     targetIcon.selected = iconData.selected;
                     targetIcon.groupId = iconData.groupId;
-                    targetIcon.tierNumber = iconData.tierNumber;
                     targetIcon.score = iconData.score;
                     // Legacy files may have individual IV/Level, but we now use global settings
 
@@ -673,7 +671,6 @@ class PokemonTierTool {
             const icon = this.icons.find(i => i.dataIndex === index);
             return {
                 ...row,
-                TierNumber: icon ? icon.tierNumber : null,
                 Score: icon ? icon.score : null,
                 GroupName: icon && icon.groupId !== null ? this.groups[icon.groupId].name : null,
                 Mode: this.mode // Add current mode to export
