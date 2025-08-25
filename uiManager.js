@@ -882,6 +882,16 @@ class UIManager {
         document.body.style.overflow = 'auto';
     }
 
+    openAboutModal() {
+        document.getElementById('aboutModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeAboutModal() {
+        document.getElementById('aboutModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
     testAdvancedFilter() {
         const query = document.getElementById('filterQuery').value.trim();
         if (!query) {

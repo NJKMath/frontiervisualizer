@@ -123,6 +123,10 @@ class PokemonTierTool {
             this.uiManager.openAdvancedFilterModal();
         });
 
+        document.getElementById('aboutBtn').addEventListener('click', () => {
+            this.uiManager.openAboutModal();
+        });
+
         document.getElementById('testFilterBtn').addEventListener('click', () => {
             this.uiManager.testAdvancedFilter();
         });
@@ -276,6 +280,13 @@ class PokemonTierTool {
         document.getElementById('advancedFilterModal').addEventListener('click', (e) => {
             if (e.target.id === 'advancedFilterModal') {
                 this.uiManager.closeAdvancedFilterModal();
+            }
+        });
+
+        // About modal click outside to close
+        document.getElementById('aboutModal').addEventListener('click', (e) => {
+            if (e.target.id === 'aboutModal') {
+                this.uiManager.closeAboutModal();
             }
         });
     }

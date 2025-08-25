@@ -9,6 +9,7 @@
 <body>
     <div class="header">
         <h1>Frontier Visualizer</h1>
+        <button class="btn secondary" id="aboutBtn">About</button>
         <span id="dataStatus">Loading data...</span>
     </div>
 
@@ -160,6 +161,63 @@
                         <button class="btn secondary" id="testFilterBtn">Test Filter</button>
                         <button class="btn success" id="createAdvancedGroupBtn">Create Group</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="advanced-filter-modal">
+        <div class="advanced-filter-content">
+            <div class="advanced-filter-header">
+                <h2>About</h2>
+                <button class="focus-modal-close" onclick="window.tool?.uiManager.closeAboutModal()">Close</button>
+            </div>
+            <div class="advanced-filter-body">
+                <p style="margin-bottom: 20px;">This tool lets you visually lay out Battle Frontier sets into various groups, or analyze speed tiers in Speed Mode. There are three different modes, each with separate profiles:</p>
+                
+                <h3 style="margin-bottom: 10px;">Free Mode:</h3>
+                <ul style="margin-bottom: 20px; padding-left: 20px;">
+                    <li>Create groups by Type, Move, Species</li>
+                    <li>Use Advanced Filter for complex queries (e.g., "Type: Water AND Move: Surf")</li>
+                    <li>Send groups to Speed Mode to help visualize speed tiers</li>
+                </ul>
+                
+                <h3 style="margin-bottom: 10px;">Score Mode:</h3>
+                <ul style="margin-bottom: 20px; padding-left: 20px;">
+                    <li>Assign numerical scores (0-100) to Pokemon via right-click or sidebar</li>
+                    <li>Icons position vertically based on their scores</li>
+                    <li>Focus mode allows detailed group management (up to 36 Pokemon)</li>
+                </ul>
+                
+                <h3 style="margin-bottom: 10px;">Speed Mode:</h3>
+                <ul style="margin-bottom: 20px; padding-left: 20px;">
+                    <li>Lays out all sets by calculated speed using current IV/Level settings</li>
+                    <li>Speed value searches to highlight specific speeds, including boosts</li>
+                </ul>
+                
+                <p style="margin-bottom: 20px;">All modes are completely separate, layouts for all three can be saved and loaded with JSON files.</p>
+                
+                <h3 style="margin-bottom: 10px;">Other Links:</h3>
+                <div style="margin-bottom: 15px;">
+                    <strong>YouTube Channel:</strong> <a href="https://youtube.com/@NJKMath" target="_blank">YouTube - NJKMath</a><br>
+                    <strong>Email:</strong> njkmath@gmail.com
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <strong>24/7 Battle Tower Stream:</strong>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                        <li><a href="https://www.twitch.tv/gen3battletower247" target="_blank">Twitch</a></li>
+                        <li><a href="https://www.youtube.com/@gen3battletower247" target="_blank">YouTube</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <strong>24/7 Battle Factory Stream:</strong>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                        <li><a href="https://www.twitch.tv/gen3battlefactory247" target="_blank">Twitch</a></li>
+                        <li><a href="https://www.youtube.com/@gen3battlefactory247" target="_blank">YouTube</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
