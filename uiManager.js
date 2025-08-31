@@ -1,4 +1,4 @@
-// Version 2.20 - Removed unused tierNumber code
+// Version 2.21 - Added Manual Mode parsing for Advanced Filter
 // User interface management methods
 class UIManager {
     constructor(tool) {
@@ -1001,6 +1001,58 @@ class UIManager {
         }
     }
 
+    parseManualFilter(query, icons) {
+        try {
+            // Remove "M:" prefix and clean up
+            const manualQuery = query.substring(2).trim();
+            
+            if (!manualQuery) {
+                return [];
+            }
+            
+            // Split by commas to get individual entries
+            const entries = manualQuery.split(',').map(entry => entry.trim()).filter(entry => entry.length > 0);
+            const matchingIcons = [];
+            
+            entries.forEach(entry => {
+                // Check if entry contains set numbers (has a dash)
+                if (entry.includes('-')) {
+                    const [species, setsPart] = entry.split('-', 2);
+                    const cleanSpecies = species.trim();
+                    
+                    // Handle multiple sets with slash notation (e.g., "1/3/4")
+                    const setNumbers = setsPart.split('/').map(set => parseInt(set.trim())).filter(set => !isNaN(set));
+                    
+                    setNumbers.forEach(setNumber => {
+                        const matchedIcon = icons.find(icon => 
+                            icon.data.Species === cleanSpecies && 
+                            parseInt(icon.data['Set#']) === setNumber
+                        );
+                        
+                        if (matchedIcon && !matchingIcons.includes(matchedIcon)) {
+                            matchingIcons.push(matchedIcon);
+                        }
+                    });
+                } else {
+                    // No dash, get all sets for this species
+                    const species = entry.trim();
+                    const speciesIcons = icons.filter(icon => icon.data.Species === species);
+                    
+                    speciesIcons.forEach(icon => {
+                        if (!matchingIcons.includes(icon)) {
+                            matchingIcons.push(icon);
+                        }
+                    });
+                }
+            });
+            
+            return matchingIcons;
+            
+        } catch (error) {
+            throw new Error('Invalid manual query format');
+        }
+    }
+
     executeAdvancedFilter(query) {
         // Only get ungrouped icons
         const availableIcons = this.tool.icons.filter(icon => icon.groupId === null);
@@ -1009,7 +1061,12 @@ class UIManager {
             return [];
         }
         
-        // Parse and execute the query
+        // Check for Manual Mode (starts with "M:")
+        if (query.trim().toUpperCase().startsWith('M:')) {
+            return this.parseManualFilter(query, availableIcons);
+        }
+        
+        // Parse and execute the regular query
         const result = this.parseFilterQuery(query, availableIcons);
         return result;
     }

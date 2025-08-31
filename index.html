@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Version 1.1 - Updated About modal, added Manual Mode instructions, added CSV upload fallback -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +12,8 @@
         <h1>Frontier Visualizer</h1>
         <button class="btn secondary" id="aboutBtn">About</button>
         <span id="dataStatus">Loading data...</span>
+        <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+        <button class="btn secondary" id="uploadCsvBtn" style="display: none;">Upload CSV File</button>
     </div>
 
     <div class="controls">
@@ -150,6 +153,15 @@
                         <div>• Move: Surf OR Move: Waterfall OR Move: Dive</div>
                         <div>• (Type: Psychic OR Type: Fighting) AND Move: ThunderPunch</div>
                     </div>
+                    <h3 style="margin-top: 15px;">Manual Mode:</h3>
+                    <p>Start with <strong>M:</strong> followed by comma-separated Pokemon and sets.</p>
+                    <div class="filter-examples">
+                        <strong>Examples:</strong>
+                        <div>• M: Charizard-1, Venusaur-1, Blastoise-1</div>
+                        <div>• M: Charizard, Venusaur, Blastoise (all sets)</div>
+                        <div>• M: Charizard-1/3/4, Blastoise-2/3 (multiple sets)</div>
+                        <div>• M: Charizard-1, Blastoise (mix of specific and all sets)</div>
+                    </div>
                 </div>
                 <div class="filter-input-section">
                     <label for="filterQuery" style="font-weight: bold;">Filter Query:</label>
@@ -198,26 +210,9 @@
                 
                 <p style="margin-bottom: 20px;">All modes are completely separate, layouts for all three can be saved and loaded with JSON files.</p>
                 
-                <h3 style="margin-bottom: 10px;">Other Links:</h3>
+                <h3 style="margin-bottom: 10px;">Other Projects:</h3>
                 <div style="margin-bottom: 15px;">
-                    <strong>YouTube Channel:</strong> <a href="https://youtube.com/@NJKMath" target="_blank">YouTube - NJKMath</a><br>
-                    <strong>Email:</strong> njkmath@gmail.com
-                </div>
-                
-                <div style="margin-bottom: 10px;">
-                    <strong>24/7 Battle Tower Stream:</strong>
-                    <ul style="margin: 5px 0; padding-left: 20px;">
-                        <li><a href="https://www.twitch.tv/gen3battletower247" target="_blank">Twitch</a></li>
-                        <li><a href="https://www.youtube.com/@gen3battletower247" target="_blank">YouTube</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <strong>24/7 Battle Factory Stream:</strong>
-                    <ul style="margin: 5px 0; padding-left: 20px;">
-                        <li><a href="https://www.twitch.tv/gen3battlefactory247" target="_blank">Twitch</a></li>
-                        <li><a href="https://www.youtube.com/@gen3battlefactory247" target="_blank">YouTube</a></li>
-                    </ul>
+                    <a href="https://njkmath.github.io/projects/" target="_blank">https://njkmath.github.io/projects/</a>
                 </div>
             </div>
         </div>

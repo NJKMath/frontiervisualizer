@@ -1,4 +1,4 @@
-// Version 2.12 - Auto-load CSV file on startup, removed manual file upload, removed unused tierNumber code
+// Version 2.13 - Added CSV upload fallback when automatic loading fails
 // Main Pokemon Tier Tool class
 class PokemonTierTool {
     constructor() {
@@ -160,6 +160,15 @@ class PokemonTierTool {
             document.getElementById('layoutInput').click();
         });
 
+        // CSV upload fallback
+        document.getElementById('uploadCsvBtn').addEventListener('click', () => {
+            document.getElementById('csvFileInput').click();
+        });
+
+        document.getElementById('csvFileInput').addEventListener('change', (e) => {
+            this.loadCSVFromFile(e.target.files[0]);
+        });
+
         document.getElementById('layoutInput').addEventListener('change', (e) => {
             this.loadLayout(e.target.files[0]);
         });
@@ -301,33 +310,61 @@ class PokemonTierTool {
             }
             
             const text = await response.text();
-            const parsed = Papa.parse(text, {
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true
-            });
-
-            this.data = parsed.data;
-            
-            // Reset all profiles when new data is loaded
-            this.profiles = {
-                free: { groups: [], iconStates: [], selectedIcons: [], initialized: false },
-                score: { groups: [], iconStates: [], selectedIcons: [], initialized: false },
-                speed: { groups: [], iconStates: [], selectedIcons: [], initialized: false }
-            };
-            
-            // Initialize current mode with fresh data
-            this.groupManager.initializeFreshProfile(this.mode);
-            
-            document.getElementById('dataStatus').textContent = 
-                `Loaded ${this.data.length} Pokemon`;
-            this.uiManager.updateCounts();
+            this.processCSVData(text);
             
         } catch (error) {
             console.error('Error loading CSV:', error);
             document.getElementById('dataStatus').textContent = 
-                'Error loading data. Please check that gen3frontiersetsgroup3.csv exists.';
+                'Error loading data. Please upload CSV file manually.';
+            
+            // Show the upload button as fallback
+            document.getElementById('uploadCsvBtn').style.display = 'inline-block';
         }
+    }
+
+    async loadCSVFromFile(file) {
+        if (!file) return;
+        
+        try {
+            document.getElementById('dataStatus').textContent = 'Loading uploaded file...';
+            document.getElementById('uploadCsvBtn').style.display = 'none';
+            
+            const text = await file.text();
+            this.processCSVData(text);
+            
+            // Clear the file input
+            document.getElementById('csvFileInput').value = '';
+            
+        } catch (error) {
+            console.error('Error loading CSV file:', error);
+            document.getElementById('dataStatus').textContent = 
+                'Error loading uploaded file. Please try again.';
+            document.getElementById('uploadCsvBtn').style.display = 'inline-block';
+        }
+    }
+
+    processCSVData(text) {
+        const parsed = Papa.parse(text, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true
+        });
+
+        this.data = parsed.data;
+        
+        // Reset all profiles when new data is loaded
+        this.profiles = {
+            free: { groups: [], iconStates: [], selectedIcons: [], initialized: false },
+            score: { groups: [], iconStates: [], selectedIcons: [], initialized: false },
+            speed: { groups: [], iconStates: [], selectedIcons: [], initialized: false }
+        };
+        
+        // Initialize current mode with fresh data
+        this.groupManager.initializeFreshProfile(this.mode);
+        
+        document.getElementById('dataStatus').textContent = 
+            `Loaded ${this.data.length} Pokemon`;
+        this.uiManager.updateCounts();
     }
 
     updateIconScore(iconId, scoreValue) {
